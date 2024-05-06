@@ -1,16 +1,19 @@
 use std::collections::HashMap;
 
+use events_api_redis_to_db::redis_reader::{create_connection, stream_events};
+use events_api_redis_to_db::{
+    events::{NftBurnEvent, NftEventContext, NftMintEvent, NftTransferEvent},
+    redis_reader::EventHandler,
+};
 use redis::{FromRedisValue, Value};
-use redis_reader::{create_connection, stream_events};
-use rust_decimal::prelude::Decimal;
-use serde::Deserialize;
-
-mod redis_reader;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
-    simple_logger::init()?;
+    simple_logger::SimpleLogger::new()
+        .with_level(log::LevelFilter::Info)
+        .init()
+        .unwrap();
 
     let redis_connection = create_connection(
         &std::env::var("REDIS_URL").expect("REDIS_URL enviroment variable not set"),
@@ -21,73 +24,33 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
 
-    tokio::spawn(stream_events(
+    let nft_mint_task = stream_events(
         "nft_mint",
         NftMintHandler,
         redis_connection.clone(),
         pg_pool.clone(),
-    ));
-    tokio::spawn(stream_events(
+    );
+    let nft_transfer_task = stream_events(
         "nft_transfer",
         NftTransferHandler,
         redis_connection.clone(),
         pg_pool.clone(),
-    ));
-    tokio::spawn(stream_events(
+    );
+    let nft_burn_task = stream_events(
         "nft_burn",
         NftBurnHandler,
         redis_connection.clone(),
         pg_pool.clone(),
-    ));
+    );
 
-    tokio::signal::ctrl_c().await?;
+    tokio::join!(nft_mint_task, nft_transfer_task, nft_burn_task);
     Ok(())
-}
-
-type TransactionId = String;
-type ReceiptId = String;
-type AccountId = String;
-type NftTokenId = String;
-type BlockHeight = u64;
-type Balance = Decimal;
-
-#[derive(Debug, Deserialize)]
-struct NftEventContext {
-    transaction_id: TransactionId,
-    receipt_id: ReceiptId,
-    block_height: BlockHeight,
-    #[serde(with = "inindexer::near_utils::dec_format")]
-    block_timestamp_nanosec: u128,
-    contract_id: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct NftMintEvent {
-    owner_id: AccountId,
-    token_ids: Vec<NftTokenId>,
-    memo: Option<String>,
-}
-
-#[derive(Debug, Deserialize)]
-struct NftTransferEvent {
-    old_owner_id: AccountId,
-    new_owner_id: AccountId,
-    token_ids: Vec<NftTokenId>,
-    memo: Option<String>,
-    token_prices_near: Vec<Option<Balance>>,
-}
-
-#[derive(Debug, Deserialize)]
-struct NftBurnEvent {
-    owner_id: AccountId,
-    token_ids: Vec<NftTokenId>,
-    memo: Option<String>,
 }
 
 struct NftTransferHandler;
 
 #[async_trait::async_trait]
-impl redis_reader::EventHandler for NftTransferHandler {
+impl EventHandler for NftTransferHandler {
     async fn handle(
         &self,
         values: HashMap<String, Value>,
@@ -129,7 +92,7 @@ impl redis_reader::EventHandler for NftTransferHandler {
 struct NftMintHandler;
 
 #[async_trait::async_trait]
-impl redis_reader::EventHandler for NftMintHandler {
+impl EventHandler for NftMintHandler {
     async fn handle(
         &self,
         values: HashMap<String, Value>,
@@ -169,7 +132,7 @@ impl redis_reader::EventHandler for NftMintHandler {
 struct NftBurnHandler;
 
 #[async_trait::async_trait]
-impl redis_reader::EventHandler for NftBurnHandler {
+impl EventHandler for NftBurnHandler {
     async fn handle(
         &self,
         values: HashMap<String, Value>,
