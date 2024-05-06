@@ -56,6 +56,8 @@ struct NftEventContext {
     transaction_id: TransactionId,
     receipt_id: ReceiptId,
     block_height: BlockHeight,
+    #[serde(with = "inindexer::near_utils::dec_format")]
+    block_timestamp_nanosec: u128,
     contract_id: String,
 }
 
@@ -104,7 +106,7 @@ impl redis_reader::EventHandler for NftTransferHandler {
                 INSERT INTO nft_transfer (timestamp, transaction_id, receipt_id, block_height, contract_id, old_owner_id, new_owner_id, token_ids, memo, token_prices_near)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 "#,
-                chrono::Utc::now(),
+                chrono::DateTime::from_timestamp((context.block_timestamp_nanosec / 1_000_000_000) as i64, (context.block_timestamp_nanosec % 1_000_000_000) as u32),
                 context.transaction_id,
                 context.receipt_id,
                 context.block_height as i64,
@@ -146,7 +148,7 @@ impl redis_reader::EventHandler for NftMintHandler {
                 INSERT INTO nft_mint (timestamp, transaction_id, receipt_id, block_height, contract_id, owner_id, token_ids, memo)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 "#,
-                chrono::Utc::now(),
+                chrono::DateTime::from_timestamp((context.block_timestamp_nanosec / 1_000_000_000) as i64, (context.block_timestamp_nanosec % 1_000_000_000) as u32),
                 context.transaction_id,
                 context.receipt_id,
                 context.block_height as i64,
@@ -186,7 +188,7 @@ impl redis_reader::EventHandler for NftBurnHandler {
                 INSERT INTO nft_burn (timestamp, transaction_id, receipt_id, block_height, contract_id, owner_id, token_ids, memo)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 "#,
-                chrono::Utc::now(),
+                chrono::DateTime::from_timestamp((context.block_timestamp_nanosec / 1_000_000_000) as i64, (context.block_timestamp_nanosec % 1_000_000_000) as u32),
                 context.transaction_id,
                 context.receipt_id,
                 context.block_height as i64,
