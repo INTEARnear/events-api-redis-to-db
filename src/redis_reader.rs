@@ -27,7 +27,7 @@ pub async fn stream_events(
             .expect("Failed to read redis stream");
         for (id, data) in entries {
             if let Err(err) = handler.handle(data, &pg_pool).await {
-                log::error!("Failed to handle event {id}: {err}");
+                log::error!("Failed to handle event {id}: {err:?}");
                 log::error!("Stopped reading events from {stream_key}");
                 break 'outer;
             }
