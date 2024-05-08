@@ -94,7 +94,7 @@ async fn main() -> anyhow::Result<()> {
         potlock_pot_donation_task,
         trade_raw_pool_swap_task,
         trade_balance_change_swap_task,
-        trade_pool_change_task
+        trade_pool_change_task,
     );
     Ok(())
 }
@@ -251,7 +251,7 @@ impl EventHandler for PotlockDonationHandler {
                 event.donor_id,
                 BigDecimal::from_str(&event.total_amount.to_string()).unwrap(),
                 event.message,
-                event.donated_at as i64,
+                event.donated_at,
                 event.project_id,
                 BigDecimal::from_str(&event.protocol_fee.to_string()).unwrap(),
                 event.referrer_id,
@@ -298,7 +298,7 @@ impl EventHandler for PotlockPotProjectDonationHandler {
                 BigDecimal::from_str(&event.total_amount.to_string()).unwrap(),
                 BigDecimal::from_str(&event.net_amount.to_string()).unwrap(),
                 event.message,
-                event.donated_at as i64,
+                event.donated_at,
                 event.project_id,
                 event.referrer_id,
                 event.referrer_fee.map(|fee| BigDecimal::from_str(&fee.to_string()).unwrap()),
@@ -347,7 +347,7 @@ impl EventHandler for PotlockPotDonationHandler {
                 BigDecimal::from_str(&event.total_amount.to_string()).unwrap(),
                 BigDecimal::from_str(&event.net_amount.to_string()).unwrap(),
                 event.message,
-                event.donated_at as i64,
+                event.donated_at,
                 event.referrer_id,
                 event.referrer_fee.map(|fee| BigDecimal::from_str(&fee.to_string()).unwrap()),
                 BigDecimal::from_str(&event.protocol_fee.to_string()).unwrap(),

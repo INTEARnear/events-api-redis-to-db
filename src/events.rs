@@ -1,5 +1,6 @@
 use std::{collections::HashMap, num::ParseIntError};
 
+use chrono::prelude::{DateTime, Utc};
 use inindexer::near_utils::{dec_format, dec_format_vec};
 use serde::{Deserialize, Serialize};
 
@@ -10,7 +11,6 @@ type NftTokenId = String;
 type BlockHeight = u64;
 type Balance = u128;
 type DonationId = u64;
-type TimestampMs = u64;
 type ProjectId = AccountId;
 type PoolId = String;
 
@@ -64,7 +64,8 @@ pub struct PotlockDonationEvent {
     #[serde(with = "dec_format")]
     pub total_amount: Balance,
     pub message: Option<String>,
-    pub donated_at: TimestampMs,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    pub donated_at: DateTime<Utc>,
     pub project_id: ProjectId,
     #[serde(with = "dec_format")]
     pub protocol_fee: Balance,
@@ -82,7 +83,8 @@ pub struct PotlockPotProjectDonationEvent {
     #[serde(with = "dec_format")]
     pub net_amount: Balance,
     pub message: Option<String>,
-    pub donated_at: TimestampMs,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    pub donated_at: DateTime<Utc>,
     pub project_id: ProjectId,
     pub referrer_id: Option<AccountId>,
     pub referrer_fee: Option<Balance>,
@@ -102,7 +104,8 @@ pub struct PotlockPotDonationEvent {
     #[serde(with = "dec_format")]
     pub net_amount: Balance,
     pub message: Option<String>,
-    pub donated_at: TimestampMs,
+    #[serde(with = "chrono::serde::ts_milliseconds")]
+    pub donated_at: DateTime<Utc>,
     pub referrer_id: Option<AccountId>,
     pub referrer_fee: Option<Balance>,
     #[serde(with = "dec_format")]
