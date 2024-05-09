@@ -240,8 +240,8 @@ impl EventHandler for PotlockDonationHandler {
         ) {
             sqlx::query!(
                 r#"
-                INSERT INTO potlock_donation (timestamp, transaction_id, receipt_id, block_height, donation_id, donor_id, total_amount, message, donated_at, project_id, protocol_fee, referrer_id, referrer_fee)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                INSERT INTO potlock_donation (timestamp, transaction_id, receipt_id, block_height, donation_id, donor_id, total_amount, ft_id, message, donated_at, project_id, protocol_fee, referrer_id, referrer_fee)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
                 "#,
                 chrono::DateTime::from_timestamp((context.block_timestamp_nanosec / 1_000_000_000) as i64, (context.block_timestamp_nanosec % 1_000_000_000) as u32),
                 context.transaction_id,
@@ -250,6 +250,7 @@ impl EventHandler for PotlockDonationHandler {
                 event.donation_id as i64,
                 event.donor_id,
                 BigDecimal::from_str(&event.total_amount.to_string()).unwrap(),
+                event.ft_id,
                 event.message,
                 event.donated_at,
                 event.project_id,

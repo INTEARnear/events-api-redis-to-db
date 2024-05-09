@@ -63,6 +63,7 @@ pub struct PotlockDonationEvent {
     pub donor_id: AccountId,
     #[serde(with = "dec_format")]
     pub total_amount: Balance,
+    pub ft_id: AccountId,
     pub message: Option<String>,
     #[serde(with = "chrono::serde::ts_milliseconds")]
     pub donated_at: DateTime<Utc>,
